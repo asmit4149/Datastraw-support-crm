@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
-import { ArrowLeft, Send } from 'lucide-react';
+import { ArrowLeft, Send, Clock, User, Mail } from 'lucide-react';
 import apiClient from '../api/apiClient';
 import StatusBadge from '../components/StatusBadge';
 
@@ -22,7 +22,7 @@ const TicketDetails = () => {
       const res = await apiClient.get(`/tickets/${ticket_id}`);
       setTicket(res.data);
     } catch (err) {
-      setError('Failed to fetch ticket details.');
+      setError('Failed to load ticket details. The ticket may have been deleted or the server is unreachable.');
     } finally {
       setLoading(false);
     }
@@ -39,7 +39,7 @@ const TicketDetails = () => {
       await apiClient.put(`/tickets/${ticket_id}`, { status: newStatus });
       setTicket({ ...ticket, status: newStatus });
     } catch (err) {
-      alert('Failed to update status');
+      alert('Failed to update status. Please try again.');
     } finally {
       setUpdating(false);
     }
@@ -53,131 +53,177 @@ const TicketDetails = () => {
       setUpdating(true);
       await apiClient.put(`/tickets/${ticket_id}`, { notes: newNote });
       setNewNote('');
-      fetchTicket(); // Refresh to get the new note with timestamp
+      fetchTicket(); 
     } catch (err) {
-      alert('Failed to add note');
+      alert('Failed to add note. Please try again.');
     } finally {
       setUpdating(false);
     }
   };
 
   if (loading) {
-    return <div className="text-center py-12">Loading ticket details...</div>;
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      </div>
+    );
   }
 
   if (error || !ticket) {
-    return <div className="text-center py-12 text-red-600">{error || 'Ticket not found.'}</div>;
+    return (
+      <div className="max-w-3xl mx-auto px-4 py-12 text-center">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-6">
+          <p className="text-red-700 font-medium">{error || 'Ticket not found.'}</p>
+          <button onClick={() => navigate('/')} className="mt-4 text-blue-600 hover:underline">Return to Dashboard</button>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="w-full px-4 sm:px-6 lg:px-8 py-8">
       <button 
         onClick={() => navigate('/')} 
-        className="flex items-center text-sm font-medium text-indigo-600 hover:text-indigo-900 mb-6"
+        className="flex items-center text-sm font-medium text-slate-500 hover:text-slate-900 mb-6 transition-colors"
       >
-        <ArrowLeft className="h-4 w-4 mr-1" />
+        <ArrowLeft className="h-4 w-4 mr-1.5" />
         Back to Dashboard
       </button>
 
-      <div className="bg-white shadow overflow-hidden sm:rounded-lg mb-8">
-        <div className="px-4 py-5 sm:px-6 flex justify-between items-center">
-          <div>
-            <h3 className="text-lg leading-6 font-medium text-gray-900 flex items-center gap-3">
-              {ticket.ticket_id}
-              <StatusBadge status={ticket.status} />
-            </h3>
-            <p className="mt-1 max-w-2xl text-sm text-gray-500">Ticket details and metadata.</p>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        
+        {/* Main Content: Ticket Info */}
+        <div className="lg:col-span-2 space-y-6">
+          <div className="card-panel">
+            <div className="px-5 py-5 sm:px-7 flex justify-between items-start border-b border-slate-200/60 bg-white">
+              <div>
+                <div className="flex items-center gap-3 mb-1">
+                  <h2 className="text-xl font-bold text-slate-900 tracking-tight">{ticket.subject}</h2>
+                </div>
+                <p className="text-sm text-slate-500 font-medium">{ticket.ticket_id}</p>
+              </div>
+              <StatusBadge status={ticket.status} className="ml-4 flex-shrink-0" />
+            </div>
+            
+            <div className="px-4 py-6 sm:px-6">
+              <p className="text-slate-700 whitespace-pre-wrap leading-relaxed">{ticket.description}</p>
+            </div>
           </div>
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-medium text-gray-700">Status:</span>
-            <select
-              value={ticket.status}
-              onChange={handleStatusChange}
-              disabled={updating}
-              className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md bg-gray-50 border"
-            >
-              <option value="Open">Open</option>
-              <option value="In Progress">In Progress</option>
-              <option value="Closed">Closed</option>
-            </select>
-          </div>
-        </div>
-        <div className="border-t border-gray-200 px-4 py-5 sm:px-6">
-          <dl className="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2">
-            <div className="sm:col-span-1">
-              <dt className="text-sm font-medium text-gray-500">Customer Name</dt>
-              <dd className="mt-1 text-sm text-gray-900">{ticket.customer_name}</dd>
-            </div>
-            <div className="sm:col-span-1">
-              <dt className="text-sm font-medium text-gray-500">Email Address</dt>
-              <dd className="mt-1 text-sm text-gray-900">{ticket.customer_email}</dd>
-            </div>
-            <div className="sm:col-span-1">
-              <dt className="text-sm font-medium text-gray-500">Created On</dt>
-              <dd className="mt-1 text-sm text-gray-900">
-                {format(new Date(ticket.created_at), 'PPP p')}
-              </dd>
-            </div>
-            <div className="sm:col-span-2">
-              <dt className="text-sm font-medium text-gray-500">Subject</dt>
-              <dd className="mt-1 text-sm text-gray-900">{ticket.subject}</dd>
-            </div>
-            <div className="sm:col-span-2">
-              <dt className="text-sm font-medium text-gray-500">Description</dt>
-              <dd className="mt-1 text-sm text-gray-900 whitespace-pre-wrap bg-gray-50 p-4 rounded-md border border-gray-100">
-                {ticket.description}
-              </dd>
-            </div>
-          </dl>
-        </div>
-      </div>
 
-      <div className="bg-white shadow sm:rounded-lg overflow-hidden">
-        <div className="px-4 py-5 sm:px-6 border-b border-gray-200">
-          <h3 className="text-lg leading-6 font-medium text-gray-900">Notes & Activity</h3>
-        </div>
-        <div className="px-4 py-6 sm:px-6">
-          <ul className="space-y-6 mb-8">
-            {ticket.notes && ticket.notes.length > 0 ? (
-              ticket.notes.map((note, idx) => (
-                <li key={idx} className="bg-gray-50 rounded-lg p-4 shadow-sm border border-gray-100">
-                  <div className="flex justify-between items-start mb-2">
-                    <span className="text-sm font-semibold text-gray-800">Support Agent</span>
-                    <span className="text-xs text-gray-500">{format(new Date(note.created_at), 'MMM d, yyyy h:mm a')}</span>
+          {/* Notes Section */}
+          <div className="card-panel">
+            <div className="px-5 py-4 sm:px-7 border-b border-slate-200/60 bg-white">
+              <h3 className="text-base font-semibold text-slate-900">Internal Notes</h3>
+            </div>
+            
+            <div className="px-5 py-6 sm:px-7 bg-slate-50/50">
+              <div className="space-y-6 mb-8">
+                {ticket.notes && ticket.notes.length > 0 ? (
+                  ticket.notes.map((note, idx) => (
+                    <div key={idx} className="bg-white rounded-lg p-5 shadow-sm border border-slate-200">
+                      <div className="flex justify-between items-center mb-3">
+                        <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
+                          <div className="h-6 w-6 rounded-full bg-blue-100 flex items-center justify-center text-blue-700">
+                            A
+                          </div>
+                          Support Agent
+                        </div>
+                        <span className="text-xs font-medium text-slate-500 flex items-center">
+                          <Clock className="h-3.5 w-3.5 mr-1" />
+                          {format(new Date(note.created_at), 'MMM d, h:mm a')}
+                        </span>
+                      </div>
+                      <p className="text-sm text-slate-700 whitespace-pre-wrap leading-relaxed pl-8">{note.note_text}</p>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-8 bg-white rounded-lg border border-slate-200 border-dashed">
+                    <p className="text-sm text-slate-500 font-medium">No notes added yet.</p>
                   </div>
-                  <p className="text-sm text-gray-700 whitespace-pre-wrap">{note.note_text}</p>
-                </li>
-              ))
-            ) : (
-              <p className="text-sm text-gray-500 text-center italic py-4">No notes added yet.</p>
-            )}
-          </ul>
+                )}
+              </div>
 
-          <form onSubmit={handleAddNote} className="mt-6">
-            <label htmlFor="note" className="sr-only">Add a note</label>
-            <div className="relative rounded-md shadow-sm">
-              <textarea
-                id="note"
-                rows={3}
-                className="form-textarea block w-full rounded-md border-gray-300 border p-3 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm resize-none"
-                placeholder="Add a new internal note..."
-                value={newNote}
-                onChange={(e) => setNewNote(e.target.value)}
-                disabled={updating}
-              />
+              <form onSubmit={handleAddNote} className="bg-white rounded-lg border border-slate-200 overflow-hidden focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500 transition-shadow">
+                <textarea
+                  rows={3}
+                  className="block w-full resize-none border-0 py-3 px-4 text-slate-900 placeholder:text-slate-400 focus:ring-0 sm:text-sm sm:leading-6"
+                  placeholder="Type an internal note..."
+                  value={newNote}
+                  onChange={(e) => setNewNote(e.target.value)}
+                  disabled={updating}
+                />
+                <div className="flex justify-between items-center px-4 py-2 bg-slate-50 border-t border-slate-100">
+                  <span className="text-xs text-slate-400 font-medium">Notes are only visible to the team</span>
+                  <button
+                    type="submit"
+                    disabled={updating || !newNote.trim()}
+                    className="btn-primary py-1.5 px-3 text-xs"
+                  >
+                    <Send className="h-3.5 w-3.5 mr-1.5" />
+                    Add Note
+                  </button>
+                </div>
+              </form>
             </div>
-            <div className="mt-3 flex justify-end">
-              <button
-                type="submit"
-                disabled={updating || !newNote.trim()}
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
-              >
-                <Send className="h-4 w-4 mr-2" />
-                Add Note
-              </button>
-            </div>
-          </form>
+          </div>
         </div>
+
+        {/* Sidebar: Metadata */}
+        <div className="lg:col-span-1 space-y-6">
+          <div className="card-panel">
+            <div className="px-5 py-4 sm:px-6 border-b border-slate-200/60 bg-white">
+              <h3 className="text-base font-semibold text-slate-900">Properties</h3>
+            </div>
+            <div className="px-5 py-5 sm:px-6 space-y-6 bg-slate-50/30">
+              
+              <div>
+                <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Status</label>
+                <select
+                  value={ticket.status}
+                  onChange={handleStatusChange}
+                  disabled={updating}
+                  className="input-field py-1.5 font-medium"
+                >
+                  <option value="Open">Open</option>
+                  <option value="In Progress">In Progress</option>
+                  <option value="Closed">Closed</option>
+                </select>
+              </div>
+
+              <div className="pt-4 border-t border-slate-100">
+                <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Customer</h4>
+                <div className="flex items-start gap-3 mb-3">
+                  <User className="h-5 w-5 text-slate-400 mt-0.5" />
+                  <div>
+                    <p className="text-sm font-medium text-slate-900">{ticket.customer_name}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Mail className="h-5 w-5 text-slate-400" />
+                  <a href={`mailto:${ticket.customer_email}`} className="text-sm font-medium text-blue-600 hover:underline">
+                    {ticket.customer_email}
+                  </a>
+                </div>
+              </div>
+
+              <div className="pt-4 border-t border-slate-100">
+                <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Dates</h4>
+                <div className="flex flex-col gap-2">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-slate-500">Created</span>
+                    <span className="font-medium text-slate-900">{format(new Date(ticket.created_at), 'MMM d, yyyy')}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-slate-500">Time</span>
+                    <span className="font-medium text-slate-900">{format(new Date(ticket.created_at), 'h:mm a')}</span>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
       </div>
     </div>
   );

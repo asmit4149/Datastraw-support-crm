@@ -1,24 +1,27 @@
 import React from 'react';
 
-const StatusBadge = ({ status }) => {
+const StatusBadge = ({ status, className = '' }) => {
   let colorClass = '';
   
   switch (status) {
     case 'Open':
-      colorClass = 'bg-blue-100 text-blue-800';
+      colorClass = 'bg-emerald-50 text-emerald-700 ring-emerald-600/20';
       break;
     case 'In Progress':
-      colorClass = 'bg-yellow-100 text-yellow-800';
+      colorClass = 'bg-amber-50 text-amber-700 ring-amber-600/20';
       break;
     case 'Closed':
-      colorClass = 'bg-green-100 text-green-800';
+      colorClass = 'bg-slate-100 text-slate-700 ring-slate-500/10';
       break;
     default:
-      colorClass = 'bg-gray-100 text-gray-800';
+      colorClass = 'bg-slate-50 text-slate-600 ring-slate-500/10';
   }
 
   return (
-    <span className={`px-2.5 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full ${colorClass}`}>
+    <span className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset ${colorClass} ${className}`}>
+      {status === 'Open' && <span className="mr-1.5 h-1.5 w-1.5 rounded-full bg-emerald-500"></span>}
+      {status === 'In Progress' && <span className="mr-1.5 h-1.5 w-1.5 rounded-full bg-amber-500"></span>}
+      {status === 'Closed' && <span className="mr-1.5 h-1.5 w-1.5 rounded-full bg-slate-400"></span>}
       {status}
     </span>
   );
