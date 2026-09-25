@@ -9,6 +9,12 @@ const errorHandler = (err, req, res, next) => {
     message = Object.values(err.errors).map(val => val.message).join(', ');
   }
 
+  // Handle Mongoose duplicate key errors safely
+  if (err.code === 11000) {
+    statusCode = 400;
+    message = 'Duplicate field value entered. Please try again.';
+  }
+
   res.status(statusCode).json({
     message,
     stack: process.env.NODE_ENV === 'production' ? null : err.stack,

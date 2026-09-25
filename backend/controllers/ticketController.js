@@ -59,11 +59,16 @@ exports.getTickets = async (req, res, next) => {
     }
     
     if (search) {
+      const escapeRegex = (string) => {
+        return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      };
+      const safeSearch = escapeRegex(search);
+
       query.$or = [
-        { customer_name: { $regex: search, $options: 'i' } },
-        { customer_email: { $regex: search, $options: 'i' } },
-        { ticket_id: { $regex: search, $options: 'i' } },
-        { description: { $regex: search, $options: 'i' } },
+        { customer_name: { $regex: safeSearch, $options: 'i' } },
+        { customer_email: { $regex: safeSearch, $options: 'i' } },
+        { ticket_id: { $regex: safeSearch, $options: 'i' } },
+        { description: { $regex: safeSearch, $options: 'i' } },
       ];
     }
 
