@@ -3,7 +3,7 @@ const Note = require('../models/Note');
 
 // Helper to generate next Ticket ID
 const generateTicketId = async () => {
-  const lastTicket = await Ticket.findOne().sort({ ticket_id: -1 });
+  const lastTicket = await Ticket.findOne().sort({ created_at: -1 });
   if (!lastTicket) {
     return 'TKT-001';
   }
@@ -19,7 +19,7 @@ const generateTicketId = async () => {
 // @access  Public
 exports.createTicket = async (req, res, next) => {
   try {
-    const { customer_name, customer_email, subject, description } = req.body;
+    const { customer_name, customer_email, subject, description, priority } = req.body;
 
     if (!customer_name || !customer_email || !subject || !description) {
       return res.status(400).json({ message: 'Please provide all required fields' });
@@ -33,6 +33,7 @@ exports.createTicket = async (req, res, next) => {
       customer_email,
       subject,
       description,
+      priority: priority || 'Medium',
     });
 
     res.status(201).json({
@@ -66,7 +67,7 @@ exports.getTickets = async (req, res, next) => {
       ];
     }
 
-    const tickets = await Ticket.find(query).select('ticket_id customer_name subject status created_at -_id').sort({ created_at: -1 });
+    const tickets = await Ticket.find(query).select('ticket_id customer_name subject status priority created_at -_id').sort({ created_at: -1 });
     
     res.status(200).json(tickets);
   } catch (error) {
@@ -104,7 +105,7 @@ exports.getTicketById = async (req, res, next) => {
 exports.updateTicket = async (req, res, next) => {
   try {
     const { ticket_id } = req.params;
-    const { status, notes } = req.body;
+    const { status, priority, notes } = req.body;
     
     const ticket = await Ticket.findOne({ ticket_id });
     if (!ticket) {
@@ -116,6 +117,16 @@ exports.updateTicket = async (req, res, next) => {
         return res.status(400).json({ message: 'Invalid status value' });
       }
       ticket.status = status;
+    }
+
+    if (priority) {
+      if (!['Low', 'Medium', 'High'].includes(priority)) {
+        return res.status(400).json({ message: 'Invalid priority value' });
+      }
+      ticket.priority = priority;
+    }
+
+    if (status || priority) {
       await ticket.save();
     }
 
@@ -130,6 +141,23 @@ exports.updateTicket = async (req, res, next) => {
       success: true,
       updated_at: ticket.updated_at,
     });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Get ticket stats
+// @route   GET /api/tickets/stats
+// @access  Public
+exports.getTicketStats = async (req, res, next) => {
+  try {
+    const total = await Ticket.countDocuments();
+    const open = await Ticket.countDocuments({ status: 'Open' });
+    const inProgress = await Ticket.countDocuments({ status: 'In Progress' });
+    const closed = await Ticket.countDocuments({ status: 'Closed' });
+    const highPriority = await Ticket.countDocuments({ priority: 'High' });
+    
+    res.status(200).json({ total, open, inProgress, closed, highPriority });
   } catch (error) {
     next(error);
   }

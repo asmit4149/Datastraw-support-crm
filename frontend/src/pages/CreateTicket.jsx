@@ -9,7 +9,8 @@ const CreateTicket = () => {
     customer_name: '',
     customer_email: '',
     subject: '',
-    description: ''
+    description: '',
+    priority: 'Medium'
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -107,19 +108,37 @@ const CreateTicket = () => {
               </div>
             </div>
 
-            <div>
-              <label htmlFor="subject" className="block text-sm font-medium leading-6 text-slate-900">Subject</label>
-              <div className="mt-2">
-                <input
-                  type="text"
-                  name="subject"
-                  id="subject"
-                  className="input-field"
-                  placeholder="Brief summary of the issue"
-                  value={formData.subject}
-                  onChange={handleChange}
-                  required
-                />
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+              <div>
+                <label htmlFor="subject" className="block text-sm font-medium leading-6 text-slate-900">Subject</label>
+                <div className="mt-2">
+                  <input
+                    type="text"
+                    name="subject"
+                    id="subject"
+                    className="input-field"
+                    placeholder="Brief summary of the issue"
+                    value={formData.subject}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
+              </div>
+              <div>
+                <label htmlFor="priority" className="block text-sm font-medium leading-6 text-slate-900">Priority</label>
+                <div className="mt-2">
+                  <select
+                    name="priority"
+                    id="priority"
+                    className="input-field appearance-none bg-white"
+                    value={formData.priority}
+                    onChange={handleChange}
+                  >
+                    <option value="Low">Low</option>
+                    <option value="Medium">Medium</option>
+                    <option value="High">High</option>
+                  </select>
+                </div>
               </div>
             </div>
 

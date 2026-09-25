@@ -8,7 +8,7 @@ import TicketDetails from './pages/TicketDetails';
 function App() {
   return (
     <Router>
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen">
         <Navbar />
         <main>
           <Routes>

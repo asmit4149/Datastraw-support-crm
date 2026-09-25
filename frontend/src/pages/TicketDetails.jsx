@@ -4,6 +4,7 @@ import { format } from 'date-fns';
 import { ArrowLeft, Send, Clock, User, Mail } from 'lucide-react';
 import apiClient from '../api/apiClient';
 import StatusBadge from '../components/StatusBadge';
+import PriorityBadge from '../components/PriorityBadge';
 
 const TicketDetails = () => {
   const { ticket_id } = useParams();
@@ -40,6 +41,19 @@ const TicketDetails = () => {
       setTicket({ ...ticket, status: newStatus });
     } catch (err) {
       alert('Failed to update status. Please try again.');
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  const handlePriorityChange = async (e) => {
+    const newPriority = e.target.value;
+    try {
+      setUpdating(true);
+      await apiClient.put(`/tickets/${ticket_id}`, { priority: newPriority });
+      setTicket({ ...ticket, priority: newPriority });
+    } catch (err) {
+      alert('Failed to update priority. Please try again.');
     } finally {
       setUpdating(false);
     }
@@ -100,7 +114,10 @@ const TicketDetails = () => {
                 <div className="flex items-center gap-3 mb-1">
                   <h2 className="text-xl font-bold text-slate-900 tracking-tight">{ticket.subject}</h2>
                 </div>
-                <p className="text-sm text-slate-500 font-medium">{ticket.ticket_id}</p>
+                <div className="flex items-center gap-3 mt-2">
+                  <p className="text-sm text-slate-500 font-medium">{ticket.ticket_id}</p>
+                  <PriorityBadge priority={ticket.priority} />
+                </div>
               </div>
               <StatusBadge status={ticket.status} className="ml-4 flex-shrink-0" />
             </div>
@@ -187,6 +204,20 @@ const TicketDetails = () => {
                   <option value="Open">Open</option>
                   <option value="In Progress">In Progress</option>
                   <option value="Closed">Closed</option>
+                </select>
+              </div>
+
+              <div className="pt-4 border-t border-slate-100">
+                <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Priority</label>
+                <select
+                  value={ticket.priority}
+                  onChange={handlePriorityChange}
+                  disabled={updating}
+                  className="input-field py-1.5 font-medium"
+                >
+                  <option value="Low">Low</option>
+                  <option value="Medium">Medium</option>
+                  <option value="High">High</option>
                 </select>
               </div>
 
